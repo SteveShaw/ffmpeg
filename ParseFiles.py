@@ -45,10 +45,19 @@ def gen_thumbnails_video(input,interval=2):
             directory = './jobs/%s'%(file_name)
             if not os.path.exists(directory):
                 os.mkdir(directory)
-            cmd = 'ffmpeg -i "%s" -vf fps=1/60 %s/%%%%03d.png'%(path_name,file_name)
+            cmd = 'ffmpeg -i "%s" -vf fps=1/30 %s/%%%%03d.png'%(path_name,file_name)
             cmd_list.append(cmd)
             #generate preview video by showing each picture for interval minutes
-            cmd = r'ffmpeg -framerate %d -i "%s/%%%%03d.png" -c:v libx264 -r 30 -pix_fmt yuv420p %s.Preview.mp4'%(interval, file_name, file_name)
+            cmd = r'ffmpeg -framerate %d/3 -i "%s/%%%%03d.png" -c:v libx264 -r 30 -pix_fmt yuv420p %s.Preview.mp4'%(interval, file_name, file_name)
+            cmd_list.append(cmd)
+    return cmd_list
+    
+def gen_video_info(input):
+    cmd_list = []
+    with open(input,'r') as f:
+        for l in f:
+            full_path = string.rstrip(l)
+            cmd = 'ffprobe -v quiet -print_format json -show_format -show_streams "%s" >> videos_info.json'%full_path
             cmd_list.append(cmd)
     return cmd_list
             
@@ -59,6 +68,7 @@ if __name__=='__main__':
     fun_map = {}
     fun_map['c'] = concat_files
     fun_map['r'] = gen_thumbnails_video
+    fun_map['v'] = gen_video_info
     pass    
     input_file = 'av_files.txt'
     if len(sys.argv) > 1:
@@ -68,7 +78,7 @@ if __name__=='__main__':
         option = sys.argv[2]
 
     cmd_list = fun_map[option](input_file)
-    with open(r'c:\study\jobs\job.bat','w+') as f:
+    with open(r'c:\study\jobs\jobs_%s.bat'%option,'w+') as f:
         for cmd in cmd_list:
             f.write('%s\n'%cmd)
         
